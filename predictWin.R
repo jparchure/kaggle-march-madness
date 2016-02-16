@@ -9,6 +9,10 @@ winnTeamsQuery<- "select TourneyCompactResults.*, Teams.Team_Name from TourneyCo
 tourneySeedsQuery <- "select TourneySeeds.*, Teams.Team_Name from Teams inner join TourneySeeds on  Teams.team_id = TourneySeeds.Team order by TourneySeeds.Season, TourneySeeds.Seed, TourneySeeds.Team"
 seasonResultsQuery <- "select * from RegularSeasonCompactResults"
 teamListQuery <- "select * from Teams"
+seasonwinsquery <- "select Wteam, Season, COUNT(*) from RegularSeasonCompactResults  GROUP BY Wteam, Season"
+generateTeamwiseResultsQuery<- "Select Season, Daynum,Wteam, Wscore, Lteam, Lscore, Wloc, Numot From RegularSeasonCompactResults Union Select Season, Daynum,Lteam, Lscore, Wteam, Wscore,Wloc, Numot From RegularSeasonCompactResults"
+teamwiseResults<-dbGetQuery(conn, generateTeamwiseResultsQuery)
+noofwins <- dbGetQuery(conn, seasonwinsquery) #No of wins per season for all teams
 tourneyWinners<- dbGetQuery(conn,winnTeamsQuery)
 tourneySeeds <- dbGetQuery(conn,tourneySeedsQuery)
 seasonResults<- dbGetQuery(conn,seasonResultsQuery)
@@ -28,23 +32,20 @@ extractSeedNums<- function(seedsTable, colname){
 
 tourneySeeds<- extractSeedNums(tourneySeeds, "Seed")
 head(tourneySeeds)
+teamwiseResults<- setnames(teamwiseResults, old=c("Wteam","Wscore","Lteam","Lscore"), new=c("Team1", "Score1", "Team2","Score2"))
+
+teamwiseResults["Result"] <- ifelse(teamwiseResults$Score1 > teamwiseResults$Score2, "W","L")
+teamwiseResults["Differential"] <- teamwiseResults$Score1 - teamwiseResults$Score2 #Calculate differential
+
+
+teamwiseResults["Location"]<- ifelse(teamwiseResults$Result=="L", ifelse(teamwiseResults$Wloc=="H","A",ifelse(teamwiseResults$Wloc=="A","H","N")), teamwiseResults$Wloc) #sapply(teamwiseResults,getcourtlocation)
+head(teamwiseResults)
 
 winningSeeds <- merge(tourneyWinners, tourneySeeds,by.x = c("Season", "Wteam"), by.y=c("Season", "Team")) #Get the Seeds of Tournament Winners
-seasonwinsquery <- "select Wteam, Season, COUNT(*) from RegularSeasonCompactResults  GROUP BY Wteam, Season"
-noofwins <- dbGetQuery(conn, seasonwinsquery)
+
+
 noOfWinsChampions <- merge(noofwins, tourneyWinners, by=c("Wteam","Season")) #No. of Wins in regular season by the eventual champion
-noOfWinsChampions["Differential"] <- noOfWinsChampions["Wscore"]- noOfWinsChampions["Lscore"]
-teamDifferential <- function(){
-  df = seasonResults
-  df["Daynum"] = NULL
-  df["Diff"] = seasonResults$Wscore - seasonResults$Lscore
-  #aggregate(df$Diff,by=list(df$Season, df$WTeam), FUN=sum)
-  #tapply(df$Diff, list(df$Season, df$WTeam), FUN=sum)
 
-  DT <- data.table(df)
-  return(data.frame(DT[, Diff:=sum(Diff), by=list(Season, Wteam)]))
-}
 
-head(teamDifferential())
 
 
