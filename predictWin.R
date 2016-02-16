@@ -1,7 +1,7 @@
 library("RSQLite")
-library("splitstackshape")
 library("stringr")
 library("plyr")
+library("data.table")
 sqlite <- dbDriver("SQLite")
 conn <- dbConnect(sqlite,"database.sqlite")
 alltables <- dbListTables(conn)
@@ -26,3 +26,5 @@ tourneySeeds<- extractSeedNums(tourneySeeds, "Seed")
 head(tourneySeeds)
 
 winningSeeds <- merge(tourneyWinners, tourneySeeds,by.x = c("Season", "Wteam"), by.y=c("Season", "Team"))
+seasonwinsquery <- "select Wteam, COUNT(*) from RegularSeasonCompactResults GROUP BY Wteam"
+noofwins <- dbGetQuery(conn, seasonwinsquery)
