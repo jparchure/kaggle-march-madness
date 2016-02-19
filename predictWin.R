@@ -32,7 +32,7 @@ extractSeedNums<- function(seedsTable, colname){
 
 tourneySeeds<- extractSeedNums(tourneySeeds, "Seed")
 head(tourneySeeds)
-teamwiseResults<- setnames(teamwiseResults, old=c("Wteam","Wscore","Lteam","Lscore"), new=c("Team1", "Score1", "Team2","Score2"))
+teamwiseResults<- rename(teamwiseResults, c("Wteam" = "Team1","Wscore" = "Score1" ,"Lteam" = "Team2","Lscore"="Score2"))
 
 teamwiseResults["Result"] <- ifelse(teamwiseResults$Score1 > teamwiseResults$Score2, "W","L")
 teamwiseResults["Differential"] <- teamwiseResults$Score1 - teamwiseResults$Score2 #Calculate differential
@@ -47,5 +47,5 @@ winningSeeds <- merge(tourneyWinners, tourneySeeds,by.x = c("Season", "Wteam"), 
 noOfWinsChampions <- merge(noofwins, tourneyWinners, by=c("Wteam","Season")) #No. of Wins in regular season by the eventual champion
 
 
-
-
+differential <- aggregate(teamwiseResults, by=list("Season", "Team1"), FUN=mean)
+head(differential)
