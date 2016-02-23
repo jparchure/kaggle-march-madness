@@ -47,5 +47,27 @@ winningSeeds <- merge(tourneyWinners, tourneySeeds,by.x = c("Season", "Wteam"), 
 noOfWinsChampions <- merge(noofwins, tourneyWinners, by=c("Wteam","Season")) #No. of Wins in regular season by the eventual champion
 
 
-differential <- aggregate(teamwiseResults, by=list("Season", "Team1"), FUN=mean)
+differential <- aggregate(teamwiseResults$Differential, by=list(Season = teamwiseResults$Season, Team = teamwiseResults$Team1),FUN=mean)
+
+loser <- teamwiseResults[teamwiseResults$Result == "L",]
+winner <- teamwiseResults[teamwiseResults$Result == "W",]
+home<- teamwiseResults[teamwiseResults$Location == "H",]
+away<- teamwiseResults[teamwiseResults$Location == "A",]
+neutral<- teamwiseResults[teamwiseResults$Location == "N",]
+differentialW <- aggregate(victor$Differential, by=list(Season = victor$Season, Team = victor$Team1),FUN=mean)
+differentialL <- aggregate(loser$Differential, by=list(Season = loser$Season, Team = loser$Team1),FUN=mean)
+differentialH <- aggregate(home$Differential, by=list(Season = home$Season, Team = home$Team1),FUN=mean)
+differentialA <- aggregate(away$Differential, by=list(Season = away$Season, Team = away$Team1),FUN=mean)
+differentialN <- aggregate(neutral$Differential, by=list(Season = neutral$Season, Team = neutral$Team1),FUN=mean)
+
+differential<- merge(differential, differentialL, by=c("Season", "Team"))
+differential<- merge(differential, differentialW, by=c("Season", "Team"))
+differential<- rename(differential, replace=c("x.x" = "Average Overall", "x.y" = "Average Losses", "x"="Average Wins"))
+differential<- merge(differential, differentialH, by=c("Season", "Team"))
+differential<- rename(differential, replace=c("x"="Average Home"))
+differential<- merge(differential, differentialA, by=c("Season", "Team"))
+differential<- rename(differential, replace=c("x" = "Average Away"))
+differential<- merge(differential, differentialN, by=c("Season", "Team"))
+differential<- rename(differential, replace=c("x" = "Average Neutral"))
+
 head(differential)
